@@ -1,388 +1,876 @@
-<script>
-    // Prendi createClient dal bundle CDN v2
-    const { createClient } = window.supabase;
-
-    // Configurazione Supabase
-    let supabase = null;
-    let currentConfig = {};
-
-    document.addEventListener('DOMContentLoaded', function() {
-        loadConfig();
-        if (currentConfig.supabaseUrl && currentConfig.supabaseKey) {
-            initSupabase();
-            loadAllData();
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Dashboard Licenze - MP3 Metadata Editor Pro</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-    });
 
-    function loadConfig() {
-        const saved = localStorage.getItem('supabaseConfig');
-        if (saved) {
-            currentConfig = JSON.parse(saved);
-        } else {
-            currentConfig = {};
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
         }
-        document.getElementById('supabaseUrl').value = currentConfig.supabaseUrl || '';
-        document.getElementById('supabaseKey').value = currentConfig.supabaseKey || '';
-    }
 
-    function saveConfig() {
-        currentConfig.supabaseUrl = document.getElementById('supabaseUrl').value.trim();
-        currentConfig.supabaseKey = document.getElementById('supabaseKey').value.trim();
-        localStorage.setItem('supabaseConfig', JSON.stringify(currentConfig));
-
-        if (currentConfig.supabaseUrl && currentConfig.supabaseKey) {
-            initSupabase();
-            loadAllData();
-            showAlert('✅ Configurazione salvata e connessione stabilita!', 'success');
-        } else {
-            showAlert('❌ Inserisci URL e Key Supabase', 'error');
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
         }
-    }
 
-    async function testConnection() {
-        const url = document.getElementById('supabaseUrl').value.trim();
-        const key = document.getElementById('supabaseKey').value.trim();
-        if (!url || !key) {
-            showAlert('❌ Inserisci URL e Key Supabase', 'error');
-            return;
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
         }
-        try {
-            const testClient = createClient(url, key);
-            const { data, error } = await testClient
-                .from('licenses')
-                .select('*')
-                .limit(1);
 
-            if (error) throw error;
-            showAlert('✅ Connessione riuscita! Database accessibile.', 'success');
-        } catch (err) {
-            showAlert(`❌ Errore di connessione: ${err.message}`, 'error');
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
-    }
 
-    function initSupabase() {
-        if (!currentConfig.supabaseUrl || !currentConfig.supabaseKey) {
-            showAlert('❌ Configura prima Supabase', 'error');
-            return;
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
         }
-        try {
-            supabase = createClient(currentConfig.supabaseUrl, currentConfig.supabaseKey);
-            console.log('Supabase inizializzato');
-        } catch (err) {
-            showAlert(`❌ Errore inizializzazione Supabase: ${err.message}`, 'error');
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 15px 15px 0 0;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-    }
 
-    // Tabs: passiamo esplicitamente il bottone
-    function showTab(tabName, btnEl) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabName).classList.add('active');
-        if (btnEl) btnEl.classList.add('active');
-    }
-
-    async function loadAllData() {
-        if (!supabase) return;
-        await Promise.all([loadLicenses(), loadActivations(), loadLogs()]);
-    }
-
-    async function loadLicenses() {
-        try {
-            const { data, error } = await supabase
-                .from('licenses')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            displayLicenses(data || []);
-        } catch (err) {
-            showAlert(`❌ Errore caricamento licenze: ${err.message}`, 'error');
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
         }
-    }
 
-    function displayLicenses(licenses) {
-        const content = document.getElementById('licensesContent');
-        if (!licenses.length) {
-            content.innerHTML = '<p>Nessuna licenza trovata.</p>';
-            return;
+        .tab:hover {
+            background: #e9ecef;
         }
-        let html = `
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Chiave Licenza</th>
-                        <th>Utente</th>
-                        <th>Email</th>
-                        <th>Stato</th>
-                        <th>Attivazioni</th>
-                        <th>Scadenza</th>
-                        <th>Azioni</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-        licenses.forEach(license => {
-            const statusClass = license.is_active ? 'status-active' : 'status-inactive';
-            const statusText = license.is_active ? '✅ Attiva' : '❌ Inattiva';
-            html += `
-                <tr>
-                    <td><strong>${license.license_key}</strong></td>
-                    <td>${license.user_name || 'N/A'}</td>
-                    <td>${license.user_email || 'N/A'}</td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td>${license.activations_count || 0}/${license.max_activations ?? '-'}</td>
-                    <td>${license.expires_at || 'Nessuna scadenza'}</td>
-                    <td>
-                        ${license.is_active
-                            ? `<a href="#" onclick="deactivateLicense('${license.license_key}')" class="btn btn-danger">❌ Disattiva</a>`
-                            : `<a href="#" onclick="activateLicense('${license.license_key}')" class="btn btn-success">✅ Attiva</a>`
-                        }
-                        <a href="#" onclick="editLicense('${license.license_key}', '${license.user_email || ''}', '${license.user_name || ''}', ${license.max_activations ?? 1})" class="btn">✏️ Modifica</a>
-                        <a href="#" onclick="deleteLicense('${license.license_key}')" class="btn btn-danger">🗑️ Elimina</a>
-                    </td>
-                </tr>
-            `;
+
+        .tab.active {
+            background: white;
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+
+        .tab-content {
+            background: white;
+            border-radius: 0 0 15px 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+
+        .tab-content:not(.active) {
+            display: none;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .table th, .table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .config-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .config-input {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Dashboard Licenze</h1>
+            <p>MP3 Metadata Editor Pro - Gestione Licenze Online</p>
+        </div>
+
+        <!-- Configurazione Supabase -->
+        <div class="config-section">
+            <h3>⚙️ Configurazione Supabase</h3>
+            <div class="form-group">
+                <label for="supabaseUrl">Supabase URL:</label>
+                <input type="text" id="supabaseUrl" placeholder="https://tuo-progetto.supabase.co" value="https://vuudgwnuwteguotkvxkn.supabase.co">
+            </div>
+            <div class="form-group">
+                <label for="supabaseKey">Supabase Anon Key:</label>
+                <input type="text" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1dWRnd251d3RlZ3VvdGt2eGtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzU0MjQsImV4cCI6MjA3MTIxMTQyNH0.fkJbq1XMTAscKQLQB03SjZvt3tZU_EKXVFyph8Ph-J8">
+            </div>
+            <button class="btn" onclick="testConnection()">🧪 Test Connessione</button>
+            <button class="btn" onclick="saveConfig()">💾 Salva Config</button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('licenses')">🔑 Licenze</button>
+            <button class="tab" onclick="showTab('activations')">💻 Attivazioni</button>
+            <button class="tab" onclick="showTab('logs')">📝 Log Sistema</button>
+            <button class="tab" onclick="showTab('create')">➕ Crea Licenza</button>
+        </div>
+
+        <!-- Tab Licenze -->
+        <div id="licenses" class="tab-content active">
+            <div class="section">
+                <h2>🔑 Gestione Licenze</h2>
+                <div id="licensesContent">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Caricamento licenze...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Attivazioni -->
+        <div id="activations" class="tab-content">
+            <div class="section">
+                <h2>💻 Attivazioni Hardware</h2>
+                <div id="activationsContent">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Caricamento attivazioni...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Log -->
+        <div id="logs" class="tab-content">
+            <div class="section">
+                <h2>📝 Log Sistema</h2>
+                <div id="logsContent">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Caricamento log...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Crea Licenza -->
+        <div id="create" class="tab-content">
+            <div class="section">
+                <h2>➕ Crea Nuova Licenza</h2>
+                <form id="createLicenseForm">
+                    <div class="form-group">
+                        <label for="userEmail">Email Utente:</label>
+                        <input type="email" id="userEmail" name="user_email" placeholder="utente@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userName">Nome Utente:</label>
+                        <input type="text" id="userName" name="user_name" placeholder="Nome Cognome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxActivations">Max Attivazioni:</label>
+                        <input type="number" id="maxActivations" name="max_activations" min="1" max="100" value="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="features">Funzionalità (JSON):</label>
+                        <textarea id="features" name="features" rows="3" placeholder='["all"] o ["basic", "advanced"]'>["all"]</textarea>
+                    </div>
+                    <button type="submit" class="btn">🚀 Crea Licenza</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per Modifica Licenza -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>✏️ Modifica Licenza</h2>
+            <form id="editForm">
+                <input type="hidden" id="editLicenseKey" name="license_key">
+                
+                <div class="form-group">
+                    <label for="editUserEmail">Email Utente:</label>
+                    <input type="email" id="editUserEmail" name="user_email" placeholder="utente@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editUserName">Nome Utente:</label>
+                    <input type="text" id="editUserName" name="user_name" placeholder="Nome Cognome">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editMaxActivations">Max Attivazioni:</label>
+                    <input type="number" id="editMaxActivations" name="max_activations" min="1" max="100" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editExpiresAt">Data Scadenza (opzionale):</label>
+                    <input type="datetime-local" id="editExpiresAt" name="expires_at">
+                </div>
+                
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="button" onclick="closeEditModal()" class="btn" style="background: #6c757d; margin-right: 10px;">❌ Annulla</button>
+                    <button type="submit" class="btn">💾 Salva Modifiche</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Configurazione Supabase
+        let supabase = null;
+        let currentConfig = {};
+
+        // Inizializzazione
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfig();
+            if (currentConfig.supabaseUrl && currentConfig.supabaseKey) {
+                initSupabase();
+                loadAllData();
+            }
         });
-        html += '</tbody></table>';
-        content.innerHTML = html;
-    }
 
-    async function loadActivations() {
-        try {
-            const { data, error } = await supabase
-                .from('activations')
-                .select('*')
-                .order('activated_at', { ascending: false });
-
-            if (error) throw error;
-            displayActivations(data || []);
-        } catch (err) {
-            showAlert(`❌ Errore caricamento attivazioni: ${err.message}`, 'error');
+        // Carica configurazione salvata
+        function loadConfig() {
+            const saved = localStorage.getItem('supabaseConfig');
+            if (saved) {
+                currentConfig = JSON.parse(saved);
+                document.getElementById('supabaseUrl').value = currentConfig.supabaseUrl || '';
+                document.getElementById('supabaseKey').value = currentConfig.supabaseKey || '';
+            }
         }
-    }
 
-    function displayActivations(activations) {
-        const content = document.getElementById('activationsContent');
-        if (!activations.length) {
-            content.innerHTML = '<p>Nessuna attivazione trovata.</p>';
-            return;
+        // Salva configurazione
+        function saveConfig() {
+            currentConfig.supabaseUrl = document.getElementById('supabaseUrl').value;
+            currentConfig.supabaseKey = document.getElementById('supabaseKey').value;
+            localStorage.setItem('supabaseConfig', JSON.stringify(currentConfig));
+            
+            if (currentConfig.supabaseUrl && currentConfig.supabaseKey) {
+                initSupabase();
+                loadAllData();
+                showAlert('✅ Configurazione salvata e connessione stabilita!', 'success');
+            }
         }
-        let html = `
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Licenza</th>
-                        <th>Hardware ID</th>
-                        <th>Piattaforma</th>
-                        <th>Versione</th>
-                        <th>Data Attivazione</th>
-                        <th>Azioni</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-        activations.forEach(a => {
-            html += `
-                <tr>
-                    <td><strong>${a.license_key}</strong></td>
-                    <td><code>${a.hardware_id}</code></td>
-                    <td>${a.platform}</td>
-                    <td>${a.version}</td>
-                    <td>${a.activated_at}</td>
-                    <td><a href="#" onclick="deleteActivation(${a.id})" class="btn btn-danger">🗑️ Elimina</a></td>
-                </tr>
+
+        // Test connessione
+        async function testConnection() {
+            const url = document.getElementById('supabaseUrl').value;
+            const key = document.getElementById('supabaseKey').value;
+            
+            if (!url || !key) {
+                showAlert('❌ Inserisci URL e Key Supabase', 'error');
+                return;
+            }
+
+            try {
+                const testSupabase = createClient(url, key);
+                const result = await testSupabase.table('licenses').select('*').limit(1).execute();
+                showAlert('✅ Connessione riuscita! Database accessibile.', 'success');
+            } catch (error) {
+                showAlert(`❌ Errore di connessione: ${error.message}`, 'error');
+            }
+        }
+
+        // Inizializza Supabase
+        function initSupabase() {
+            if (!currentConfig.supabaseUrl || !currentConfig.supabaseKey) {
+                showAlert('❌ Configura prima Supabase', 'error');
+                return;
+            }
+
+            try {
+                supabase = createClient(currentConfig.supabaseUrl, currentConfig.supabaseKey);
+                console.log('Supabase inizializzato');
+            } catch (error) {
+                showAlert(`❌ Errore inizializzazione Supabase: ${error.message}`, 'error');
+            }
+        }
+
+        // Mostra tab
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            const tabButtons = document.querySelectorAll('.tab');
+            tabButtons.forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Carica tutti i dati
+        async function loadAllData() {
+            if (!supabase) return;
+            
+            await Promise.all([
+                loadLicenses(),
+                loadActivations(),
+                loadLogs()
+            ]);
+        }
+
+        // Carica licenze
+        async function loadLicenses() {
+            try {
+                const result = await supabase.table('licenses').select('*').order('created_at', { ascending: false }).execute();
+                
+                if (result.error) throw result.error;
+                
+                const licenses = result.data || [];
+                displayLicenses(licenses);
+            } catch (error) {
+                showAlert(`❌ Errore caricamento licenze: ${error.message}`, 'error');
+            }
+        }
+
+        // Mostra licenze
+        function displayLicenses(licenses) {
+            const content = document.getElementById('licensesContent');
+            
+            if (licenses.length === 0) {
+                content.innerHTML = '<p>Nessuna licenza trovata.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Chiave Licenza</th>
+                            <th>Utente</th>
+                            <th>Email</th>
+                            <th>Stato</th>
+                            <th>Attivazioni</th>
+                            <th>Scadenza</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             `;
-        });
-        html += '</tbody></table>';
-        content.innerHTML = html;
-    }
 
-    async function loadLogs() {
-        try {
-            const { data, error } = await supabase
-                .from('logs')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(100);
-
-            if (error) throw error;
-            displayLogs(data || []);
-        } catch (err) {
-            showAlert(`❌ Errore caricamento log: ${err.message}`, 'error');
-        }
-    }
-
-    function displayLogs(logs) {
-        const content = document.getElementById('logsContent');
-        if (!logs.length) {
-            content.innerHTML = '<p>Nessun log trovato.</p>';
-            return;
-        }
-        let html = `
-            <table class="table">
-                <thead>
+            licenses.forEach(license => {
+                const statusClass = license.is_active ? 'status-active' : 'status-inactive';
+                const statusText = license.is_active ? '✅ Attiva' : '❌ Inattiva';
+                
+                html += `
                     <tr>
-                        <th>Data</th>
-                        <th>Licenza</th>
-                        <th>Azione</th>
-                        <th>Dettagli</th>
+                        <td><strong>${license.license_key}</strong></td>
+                        <td>${license.user_name || 'N/A'}</td>
+                        <td>${license.user_email || 'N/A'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${license.activations_count || 0}/${license.max_activations}</td>
+                        <td>${license.expires_at || 'Nessuna scadenza'}</td>
+                        <td>
+                            ${license.is_active ? 
+                                `<a href="#" onclick="deactivateLicense('${license.license_key}')" class="btn btn-danger">❌ Disattiva</a>` :
+                                `<a href="#" onclick="activateLicense('${license.license_key}')" class="btn btn-success">✅ Attiva</a>`
+                            }
+                            <a href="#" onclick="editLicense('${license.license_key}', '${license.user_email || ''}', '${license.user_name || ''}', ${license.max_activations})" class="btn">✏️ Modifica</a>
+                            <a href="#" onclick="deleteLicense('${license.license_key}')" class="btn btn-danger" onclick="return confirm('⚠️ Sei sicuro di voler eliminare questa licenza?')">🗑️ Elimina</a>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-        `;
-        logs.forEach(l => {
-            html += `
-                <tr>
-                    <td>${l.created_at}</td>
-                    <td><strong>${l.license_key}</strong></td>
-                    <td>${l.action}</td>
-                    <td>${l.details || ''}</td>
-                </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        // Carica attivazioni
+        async function loadActivations() {
+            try {
+                const result = await supabase.table('activations').select('*').order('activated_at', { ascending: false }).execute();
+                
+                if (result.error) throw result.error;
+                
+                const activations = result.data || [];
+                displayActivations(activations);
+            } catch (error) {
+                showAlert(`❌ Errore caricamento attivazioni: ${error.message}`, 'error');
+            }
+        }
+
+        // Mostra attivazioni
+        function displayActivations(activations) {
+            const content = document.getElementById('activationsContent');
+            
+            if (activations.length === 0) {
+                content.innerHTML = '<p>Nessuna attivazione trovata.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Licenza</th>
+                            <th>Hardware ID</th>
+                            <th>Piattaforma</th>
+                            <th>Versione</th>
+                            <th>Data Attivazione</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             `;
+
+            activations.forEach(activation => {
+                html += `
+                    <tr>
+                        <td><strong>${activation.license_key}</strong></td>
+                        <td><code>${activation.hardware_id}</code></td>
+                        <td>${activation.platform}</td>
+                        <td>${activation.version}</td>
+                        <td>${activation.activated_at}</td>
+                        <td>
+                            <a href="#" onclick="deleteActivation(${activation.id})" class="btn btn-danger" onclick="return confirm('⚠️ Eliminare questa attivazione?')">🗑️ Elimina</a>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        // Carica log
+        async function loadLogs() {
+            try {
+                const result = await supabase.table('logs').select('*').order('created_at', { ascending: false }).limit(100).execute();
+                
+                if (result.error) throw result.error;
+                
+                const logs = result.data || [];
+                displayLogs(logs);
+            } catch (error) {
+                showAlert(`❌ Errore caricamento log: ${error.message}`, 'error');
+            }
+        }
+
+        // Mostra log
+        function displayLogs(logs) {
+            const content = document.getElementById('logsContent');
+            
+            if (logs.length === 0) {
+                content.innerHTML = '<p>Nessun log trovato.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Licenza</th>
+                            <th>Azione</th>
+                            <th>Dettagli</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            logs.forEach(log => {
+                html += `
+                    <tr>
+                        <td>${log.created_at}</td>
+                        <td><strong>${log.license_key}</strong></td>
+                        <td>${log.action}</td>
+                        <td>${log.details || ''}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        // Attiva licenza
+        async function activateLicense(licenseKey) {
+            try {
+                const result = await supabase.table('licenses').update({ is_active: true }).eq('license_key', licenseKey).execute();
+                
+                if (result.error) throw result.error;
+                
+                showAlert('✅ Licenza attivata con successo!', 'success');
+                loadLicenses();
+            } catch (error) {
+                showAlert(`❌ Errore nell'attivazione: ${error.message}`, 'error');
+            }
+        }
+
+        // Disattiva licenza
+        async function deactivateLicense(licenseKey) {
+            try {
+                const result = await supabase.table('licenses').update({ is_active: false }).eq('license_key', licenseKey).execute();
+                
+                if (result.error) throw result.error;
+                
+                showAlert('❌ Licenza disattivata con successo!', 'success');
+                loadLicenses();
+            } catch (error) {
+                showAlert(`❌ Errore nella disattivazione: ${error.message}`, 'error');
+            }
+        }
+
+        // Elimina licenza
+        async function deleteLicense(licenseKey) {
+            if (!confirm('⚠️ Sei sicuro di voler eliminare questa licenza? Questa azione non può essere annullata!')) {
+                return;
+            }
+
+            try {
+                // Prima elimina le attivazioni
+                await supabase.table('activations').delete().eq('license_key', licenseKey).execute();
+                
+                // Poi elimina la licenza
+                const result = await supabase.table('licenses').delete().eq('license_key', licenseKey).execute();
+                
+                if (result.error) throw result.error;
+                
+                showAlert('🗑️ Licenza eliminata con successo!', 'success');
+                loadAllData();
+            } catch (error) {
+                showAlert(`❌ Errore nell'eliminazione: ${error.message}`, 'error');
+            }
+        }
+
+        // Elimina attivazione
+        async function deleteActivation(activationId) {
+            if (!confirm('⚠️ Eliminare questa attivazione? L\'utente dovrà riattivare la licenza.')) {
+                return;
+            }
+
+            try {
+                const result = await supabase.table('activations').delete().eq('id', activationId).execute();
+                
+                if (result.error) throw result.error;
+                
+                showAlert('🗑️ Attivazione eliminata con successo!', 'success');
+                loadActivations();
+            } catch (error) {
+                showAlert(`❌ Errore nell'eliminazione: ${error.message}`, 'error');
+            }
+        }
+
+        // Modifica licenza
+        function editLicense(licenseKey, userEmail, userName, maxActivations) {
+            document.getElementById('editLicenseKey').value = licenseKey;
+            document.getElementById('editUserEmail').value = userEmail;
+            document.getElementById('editUserName').value = userName;
+            document.getElementById('editMaxActivations').value = maxActivations;
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        // Chiudi modal
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        // Salva modifiche licenza
+        async function saveLicenseEdit(event) {
+            event.preventDefault();
+            
+            const licenseKey = document.getElementById('editLicenseKey').value;
+            const userEmail = document.getElementById('editUserEmail').value;
+            const userName = document.getElementById('editUserName').value;
+            const maxActivations = document.getElementById('editMaxActivations').value;
+            const expiresAt = document.getElementById('editExpiresAt').value;
+
+            try {
+                const updateData = {
+                    user_email: userEmail || null,
+                    user_name: userName || null,
+                    max_activations: parseInt(maxActivations),
+                    updated_at: new Date().toISOString()
+                };
+
+                if (expiresAt) {
+                    updateData.expires_at = new Date(expiresAt).toISOString();
+                } else {
+                    updateData.expires_at = null;
+                }
+
+                const result = await supabase.table('licenses').update(updateData).eq('license_key', licenseKey).execute();
+                
+                if (result.error) throw result.error;
+                
+                showAlert('✅ Licenza aggiornata con successo!', 'success');
+                closeEditModal();
+                loadLicenses();
+            } catch (error) {
+                showAlert(`❌ Errore nell'aggiornamento: ${error.message}`, 'error');
+            }
+        }
+
+        // Crea licenza
+        async function createLicense(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const licenseData = {
+                user_email: formData.get('user_email'),
+                user_name: formData.get('user_name'),
+                max_activations: parseInt(formData.get('max_activations')),
+                features: JSON.parse(formData.get('features')),
+                is_active: true,
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                const result = await supabase.table('licenses').insert(licenseData).execute();
+                
+                if (result.error) throw result.error;
+                
+                showAlert('🚀 Licenza creata con successo!', 'success');
+                event.target.reset();
+                loadLicenses();
+            } catch (error) {
+                showAlert(`❌ Errore nella creazione: ${error.message}`, 'error');
+            }
+        }
+
+        // Mostra alert
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.tabs'));
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Event listeners
+        document.getElementById('editForm').addEventListener('submit', saveLicenseEdit);
+        document.getElementById('createLicenseForm').addEventListener('submit', createLicense);
+
+        // Chiudi modal cliccando fuori
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
         });
-        html += '</tbody></table>';
-        content.innerHTML = html;
-    }
-
-    async function activateLicense(licenseKey) {
-        try {
-            const { error } = await supabase
-                .from('licenses')
-                .update({ is_active: true })
-                .eq('license_key', licenseKey);
-            if (error) throw error;
-            showAlert('✅ Licenza attivata con successo!', 'success');
-            loadLicenses();
-        } catch (err) {
-            showAlert(`❌ Errore nell'attivazione: ${err.message}`, 'error');
-        }
-    }
-
-    async function deactivateLicense(licenseKey) {
-        try {
-            const { error } = await supabase
-                .from('licenses')
-                .update({ is_active: false })
-                .eq('license_key', licenseKey);
-            if (error) throw error;
-            showAlert('❌ Licenza disattivata con successo!', 'success');
-            loadLicenses();
-        } catch (err) {
-            showAlert(`❌ Errore nella disattivazione: ${err.message}`, 'error');
-        }
-    }
-
-    async function deleteLicense(licenseKey) {
-        if (!confirm('⚠️ Sei sicuro di voler eliminare questa licenza? Questa azione non può essere annullata!')) return;
-        try {
-            await supabase.from('activations').delete().eq('license_key', licenseKey);
-            const { error } = await supabase.from('licenses').delete().eq('license_key', licenseKey);
-            if (error) throw error;
-            showAlert('🗑️ Licenza eliminata con successo!', 'success');
-            loadAllData();
-        } catch (err) {
-            showAlert(`❌ Errore nell'eliminazione: ${err.message}`, 'error');
-        }
-    }
-
-    async function deleteActivation(activationId) {
-        if (!confirm('⚠️ Eliminare questa attivazione? L\'utente dovrà riattivare la licenza.')) return;
-        try {
-            const { error } = await supabase.from('activations').delete().eq('id', activationId);
-            if (error) throw error;
-            showAlert('🗑️ Attivazione eliminata con successo!', 'success');
-            loadActivations();
-        } catch (err) {
-            showAlert(`❌ Errore nell\'eliminazione: ${err.message}`, 'error');
-        }
-    }
-
-    function editLicense(licenseKey, userEmail, userName, maxActivations) {
-        document.getElementById('editLicenseKey').value = licenseKey;
-        document.getElementById('editUserEmail').value = userEmail;
-        document.getElementById('editUserName').value = userName;
-        document.getElementById('editMaxActivations').value = maxActivations || 1;
-        document.getElementById('editModal').style.display = 'block';
-    }
-
-    function closeEditModal() {
-        document.getElementById('editModal').style.display = 'none';
-    }
-
-    async function saveLicenseEdit(event) {
-        event.preventDefault();
-        const licenseKey = document.getElementById('editLicenseKey').value;
-        const userEmail = document.getElementById('editUserEmail').value || null;
-        const userName = document.getElementById('editUserName').value || null;
-        const maxActivations = parseInt(document.getElementById('editMaxActivations').value || '1', 10);
-        const expiresAt = document.getElementById('editExpiresAt').value;
-
-        const updateData = {
-            user_email: userEmail,
-            user_name: userName,
-            max_activations: maxActivations,
-            updated_at: new Date().toISOString(),
-            expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
-        };
-
-        try {
-            const { error } = await supabase
-                .from('licenses')
-                .update(updateData)
-                .eq('license_key', licenseKey);
-            if (error) throw error;
-            showAlert('✅ Licenza aggiornata con successo!', 'success');
-            closeEditModal();
-            loadLicenses();
-        } catch (err) {
-            showAlert(`❌ Errore nell\'aggiornamento: ${err.message}`, 'error');
-        }
-    }
-
-    async function createLicense(event) {
-        event.preventDefault();
-        const formData = new FormData(event.target);
-
-        let features = ['all'];
-        const rawFeatures = formData.get('features');
-        if (rawFeatures) {
-            try { features = JSON.parse(rawFeatures); }
-            catch { return showAlert('❌ "Funzionalità" deve essere JSON valido (es: ["all"])', 'error'); }
-        }
-
-        const payload = {
-            user_email: formData.get('user_email'),
-            user_name: formData.get('user_name'),
-            max_activations: parseInt(formData.get('max_activations') || '1', 10),
-            features,
-            is_active: true,
-            activations_count: 0,
-            created_at: new Date().toISOString()
-        };
-
-        try {
-            const { error } = await supabase.from('licenses').insert(payload);
-            if (error) throw error;
-            showAlert('🚀 Licenza creata con successo!', 'success');
-            event.target.reset();
-            loadLicenses();
-        } catch (err) {
-            showAlert(`❌ Errore nella creazione: ${err.message}`, 'error');
-        }
-    }
-
-    function showAlert(message, type) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type}`;
-        alertDiv.textContent = message;
-        document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.tabs'));
-        setTimeout(() => alertDiv.remove(), 5000);
-    }
-
-    document.getElementById('editForm').addEventListener('submit', saveLicenseEdit);
-    document.getElementById('createLicenseForm').addEventListener('submit', createLicense);
-
-    document.getElementById('editModal').addEventListener('click', function(e) {
-        if (e.target === this) closeEditModal();
-    });
-</script>
+    </script>
+</body>
+</html>
