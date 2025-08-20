@@ -1,1 +1,992 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Dashboard Licenze - MP3 Metadata Editor Pro</title>
+    
+    <!-- Supabase CDN con fallback completo -->
+    <script>
+        // Fallback completo per Supabase
+        window.supabase = window.supabase || {};
+        window.supabase.createClient = window.supabase.createClient || function(url, key) {
+            console.warn('Supabase CDN non caricato, usando fallback completo');
+            return {
+                from: (table) => ({
+                    select: (columns) => ({
+                        order: (column, options) => ({
+                            limit: (count) => Promise.resolve({ data: [], error: null })
+                        }),
+                        limit: (count) => Promise.resolve({ data: [], error: null })
+                    }),
+                    insert: (data) => Promise.resolve({ data: null, error: new Error('Supabase non disponibile - Fallback') }),
+                    update: (data) => ({
+                        eq: (column, value) => Promise.resolve({ data: null, error: new Error('Supabase non disponibile - Fallback') })
+                    }),
+                    delete: () => ({
+                        eq: (column, value) => Promise.resolve({ data: null, error: new Error('Supabase non disponibile - Fallback') })
+                    })
+                })
+            };
+        };
+    </script>
+    
+    <!-- Prova TUTTI i CDN possibili -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="console.warn('CDN jsdelivr fallito')"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2" onerror="console.warn('CDN unpkg fallito')"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.38.4/umd/supabase.min.js" onerror="console.warn('CDN cdnjs fallito')"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .config-section h2 {
+            color: #495057;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            color: #495057;
+        }
+
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input[type="datetime-local"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .cdn-status {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            color: #0066cc;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .cdn-status.error {
+            background: #ffe7e7;
+            border-color: #ffb3b3;
+            color: #cc0000;
+        }
+
+        .cdn-status.success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Dashboard Licenze</h1>
+            <p>MP3 Metadata Editor Pro - Gestione Licenze Online</p>
+        </div>
+
+        <!-- Status CDN -->
+        <div id="cdnStatus" class="cdn-status">
+            🔄 Verificando caricamento Supabase CDN...
+        </div>
+
+        <!-- Debug Info -->
+        <div id="debugInfo" class="debug-info" style="display: none;">
+            <strong>Debug Info:</strong><br>
+            <span id="debugContent"></span>
+        </div>
+
+        <!-- Configurazione Supabase -->
+        <div class="config-section">
+            <h2>⚙️ Configurazione Supabase</h2>
+            <div class="form-group">
+                <label for="supabaseUrl">Supabase URL:</label>
+                <input type="text" id="supabaseUrl" placeholder="https://your-project.supabase.co" value="https://vuudgwnuwteguotkvxkn.supabase.co">
+            </div>
+            <div class="form-group">
+                <label for="supabaseKey">Supabase Anon Key:</label>
+                <input type="text" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1dWRnd251d3RlZ3VvdGt2eGtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzU0MjQsImV4cCI6MjA3MTIxMTQyNH0.fkJbq1XMTAscKQLQB03SjZvt3tZU_EKXVFyph8Ph-J8">
+            </div>
+            <button class="btn" onclick="testConnection()">�� Test Connessione</button>
+            <button class="btn" onclick="saveConfig()">💾 Salva Config</button>
+            <button class="btn" onclick="toggleDebug()">�� Debug Info</button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('licenses', this)">🔑 Licenze</button>
+            <button class="tab" onclick="showTab('activations', this)">💻 Attivazioni</button>
+            <button class="tab" onclick="showTab('logs', this)">📝 Log Sistema</button>
+            <button class="tab" onclick="showTab('create', this)">➕ Crea Licenza</button>
+        </div>
+
+        <!-- Tab Licenze -->
+        <div id="licenses" class="tab-content active">
+            <div class="section">
+                <h2>�� Gestione Licenze</h2>
+                <div id="licensesContent">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Caricamento licenze...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Attivazioni -->
+        <div id="activations" class="tab-content">
+            <div class="section">
+                <h2>💻 Attivazioni Hardware</h2>
+                <div id="activationsContent">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Caricamento attivazioni...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Log -->
+        <div id="logs" class="tab-content">
+            <div class="section">
+                <h2>📝 Log Sistema</h2>
+                <div id="logsContent">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Caricamento log...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Crea Licenza -->
+        <div id="create" class="tab-content">
+            <div class="section">
+                <h2>➕ Crea Nuova Licenza</h2>
+                <form id="createLicenseForm">
+                    <div class="form-group">
+                        <label for="userEmail">Email Utente:</label>
+                        <input type="email" id="userEmail" name="user_email" placeholder="utente@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userName">Nome Utente:</label>
+                        <input type="text" id="userName" name="user_name" placeholder="Nome Cognome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxActivations">Max Attivazioni:</label>
+                        <input type="number" id="maxActivations" name="max_activations" min="1" max="100" value="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="features">Funzionalità (JSON):</label>
+                        <textarea id="features" name="features" rows="3" placeholder='["all"] o ["basic", "advanced"]'>["all"]</textarea>
+                    </div>
+                    <button type="submit" class="btn">🚀 Crea Licenza</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per Modifica Licenza -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>✏️ Modifica Licenza</h2>
+            <form id="editForm">
+                <input type="hidden" id="editLicenseKey" name="license_key">
+                
+                <div class="form-group">
+                    <label for="editUserEmail">Email Utente:</label>
+                    <input type="email" id="editUserEmail" name="user_email" placeholder="utente@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editUserName">Nome Utente:</label>
+                    <input type="text" id="editUserName" name="user_name" placeholder="Nome Cognome">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editMaxActivations">Max Attivazioni:</label>
+                    <input type="number" id="editMaxActivations" name="max_activations" min="1" max="100" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editExpiresAt">Data Scadenza (opzionale):</label>
+                    <input type="datetime-local" id="editExpiresAt" name="expires_at">
+                </div>
+                
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="button" onclick="closeEditModal()" class="btn" style="background: #6c757d; margin-right: 10px;">❌ Annulla</button>
+                    <button type="submit" class="btn">💾 Salva Modifiche</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Debug info
+        let debugLog = [];
+        
+        function logDebug(message) {
+            debugLog.push(`${new Date().toLocaleTimeString()}: ${message}`);
+            console.log(message);
+        }
+
+        function toggleDebug() {
+            const debugDiv = document.getElementById('debugInfo');
+            const debugContent = document.getElementById('debugContent');
+            
+            if (debugDiv.style.display === 'none') {
+                debugContent.innerHTML = debugLog.join('<br>');
+                debugDiv.style.display = 'block';
+            } else {
+                debugDiv.style.display = 'none';
+            }
+        }
+
+        // Verifica caricamento CDN
+        function checkCDNStatus() {
+            const statusDiv = document.getElementById('cdnStatus');
+            
+            logDebug('Verificando Supabase CDN...');
+            
+            if (window.supabase && window.supabase.createClient) {
+                statusDiv.innerHTML = '✅ Supabase CDN caricato correttamente';
+                statusDiv.className = 'cdn-status success';
+                logDebug('✅ Supabase CDN disponibile');
+            } else {
+                statusDiv.innerHTML = '⚠️ Supabase CDN non caricato - usando fallback locale';
+                statusDiv.className = 'cdn-status error';
+                logDebug('⚠️ Supabase CDN non disponibile, usando fallback');
+            }
+        }
+
+        // Prendi createClient dal bundle CDN v2
+        const { createClient } = window.supabase || {};
+
+        // Configurazione Supabase
+        let supabase = null;
+        let currentConfig = {};
+
+        document.addEventListener('DOMContentLoaded', function() {
+            logDebug('DOM caricato');
+            
+            // Verifica CDN dopo 3 secondi
+            setTimeout(checkCDNStatus, 3000);
+            
+            loadConfig();
+            if (currentConfig.supabaseUrl && currentConfig.supabaseKey) {
+                initSupabase();
+                loadAllData();
+            }
+        });
+
+        function loadConfig() {
+            const saved = localStorage.getItem('supabaseConfig');
+            if (saved) {
+                currentConfig = JSON.parse(saved);
+                logDebug('Configurazione caricata da localStorage');
+            } else {
+                currentConfig = {};
+                logDebug('Nessuna configurazione salvata');
+            }
+            document.getElementById('supabaseUrl').value = currentConfig.supabaseUrl || '';
+            document.getElementById('supabaseKey').value = currentConfig.supabaseKey || '';
+        }
+
+        function saveConfig() {
+            currentConfig.supabaseUrl = document.getElementById('supabaseUrl').value.trim();
+            currentConfig.supabaseKey = document.getElementById('supabaseKey').value.trim();
+            localStorage.setItem('supabaseConfig', JSON.stringify(currentConfig));
+            
+            logDebug('Configurazione salvata');
+
+            if (currentConfig.supabaseUrl && currentConfig.supabaseKey) {
+                initSupabase();
+                loadAllData();
+                showAlert('✅ Configurazione salvata e connessione stabilita!', 'success');
+            } else {
+                showAlert('❌ Inserisci URL e Key Supabase', 'error');
+            }
+        }
+
+        async function testConnection() {
+            const url = document.getElementById('supabaseUrl').value.trim();
+            const key = document.getElementById('supabaseKey').value.trim();
+            
+            logDebug(`Test connessione a: ${url}`);
+            
+            if (!url || !key) {
+                showAlert('❌ Inserisci URL e Key Supabase', 'error');
+                return;
+            }
+            
+            try {
+                if (!window.supabase || !window.supabase.createClient) {
+                    throw new Error('Supabase CDN non caricato');
+                }
+                
+                const testClient = createClient(url, key);
+                logDebug('Client Supabase creato');
+                
+                const { data, error } = await testClient
+                    .from('licenses')
+                    .select('*')
+                    .limit(1);
+
+                if (error) throw error;
+                
+                logDebug('Test connessione riuscito');
+                showAlert('✅ Connessione riuscita! Database accessibile.', 'success');
+            } catch (err) {
+                logDebug(`Errore test connessione: ${err.message}`);
+                showAlert(`❌ Errore di connessione: ${err.message}`, 'error');
+            }
+        }
+
+        function initSupabase() {
+            if (!currentConfig.supabaseUrl || !currentConfig.supabaseKey) {
+                showAlert('❌ Configura prima Supabase', 'error');
+                return;
+            }
+            
+            if (!window.supabase || !window.supabase.createClient) {
+                showAlert('❌ Supabase CDN non disponibile', 'error');
+                return;
+            }
+            
+            try {
+                supabase = createClient(currentConfig.supabaseUrl, currentConfig.supabaseKey);
+                logDebug('Supabase inizializzato');
+            } catch (err) {
+                logDebug(`Errore inizializzazione: ${err.message}`);
+                showAlert(`❌ Errore inizializzazione Supabase: ${err.message}`, 'error');
+            }
+        }
+
+        // Tabs: passiamo esplicitamente il bottone
+        function showTab(tabName, btnEl) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            if (btnEl) btnEl.classList.add('active');
+        }
+
+        async function loadAllData() {
+            if (!supabase) return;
+            await Promise.all([loadLicenses(), loadActivations(), loadLogs()]);
+        }
+
+        async function loadLicenses() {
+            try {
+                logDebug('Caricamento licenze...');
+                const { data, error } = await supabase
+                    .from('licenses')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                logDebug(`Licenze caricate: ${data?.length || 0}`);
+                displayLicenses(data || []);
+            } catch (err) {
+                logDebug(`Errore caricamento licenze: ${err.message}`);
+                showAlert(`❌ Errore caricamento licenze: ${err.message}`, 'error');
+            }
+        }
+
+        function displayLicenses(licenses) {
+            const content = document.getElementById('licensesContent');
+            if (!licenses.length) {
+                content.innerHTML = '<p>Nessuna licenza trovata.</p>';
+                return;
+            }
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Chiave Licenza</th>
+                            <th>Utente</th>
+                            <th>Email</th>
+                            <th>Stato</th>
+                            <th>Attivazioni</th>
+                            <th>Scadenza</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            licenses.forEach(license => {
+                const statusClass = license.is_active ? 'status-active' : 'status-inactive';
+                const statusText = license.is_active ? '✅ Attiva' : '❌ Inattiva';
+                html += `
+                    <tr>
+                        <td><strong>${license.license_key}</strong></td>
+                        <td>${license.user_name || 'N/A'}</td>
+                        <td>${license.user_email || 'N/A'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${license.activations_count || 0}/${license.max_activations ?? '-'}</td>
+                        <td>${license.expires_at || 'Nessuna scadenza'}</td>
+                        <td>
+                            ${license.is_active
+                                ? `<a href="#" onclick="deactivateLicense('${license.license_key}')" class="btn btn-danger">❌ Disattiva</a>`
+                                : `<a href="#" onclick="activateLicense('${license.license_key}')" class="btn btn-success">✅ Attiva</a>`
+                            }
+                            <a href="#" onclick="editLicense('${license.license_key}', '${license.user_email || ''}', '${license.user_name || ''}', ${license.max_activations ?? 1})" class="btn">✏️ Modifica</a>
+                            <a href="#" onclick="deleteLicense('${license.license_key}')" class="btn btn-danger">🗑️ Elimina</a>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        async function loadActivations() {
+            try {
+                logDebug('Caricamento attivazioni...');
+                const { data, error } = await supabase
+                    .from('activations')
+                    .select('*')
+                    .order('activated_at', { ascending: false });
+
+                if (error) throw error;
+                logDebug(`Attivazioni caricate: ${data?.length || 0}`);
+                displayActivations(data || []);
+            } catch (err) {
+                logDebug(`Errore caricamento attivazioni: ${err.message}`);
+                showAlert(`❌ Errore caricamento attivazioni: ${err.message}`, 'error');
+            }
+        }
+
+        function displayActivations(activations) {
+            const content = document.getElementById('activationsContent');
+            if (!activations.length) {
+                content.innerHTML = '<p>Nessuna attivazione trovata.</p>';
+                return;
+            }
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Licenza</th>
+                            <th>Hardware ID</th>
+                            <th>Piattaforma</th>
+                            <th>Versione</th>
+                            <th>Data Attivazione</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            activations.forEach(a => {
+                html += `
+                    <tr>
+                        <td><strong>${a.license_key}</strong></td>
+                        <td><code>${a.hardware_id}</code></td>
+                        <td>${a.platform}</td>
+                        <td>${a.version}</td>
+                        <td>${a.activated_at}</td>
+                        <td><a href="#" onclick="deleteActivation(${a.id})" class="btn btn-danger">��️ Elimina</a></td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        async function loadLogs() {
+            try {
+                logDebug('Caricamento log...');
+                const { data, error } = await supabase
+                    .from('logs')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(100);
+
+                if (error) throw error;
+                logDebug(`Log caricati: ${data?.length || 0}`);
+                displayLogs(data || []);
+            } catch (err) {
+                logDebug(`Errore caricamento log: ${err.message}`);
+                showAlert(`❌ Errore caricamento log: ${err.message}`, 'error');
+            }
+        }
+
+        function displayLogs(logs) {
+            const content = document.getElementById('logsContent');
+            if (!logs.length) {
+                content.innerHTML = '<p>Nessun log trovato.</p>';
+                return;
+            }
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Licenza</th>
+                            <th>Azione</th>
+                            <th>Dettagli</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            logs.forEach(l => {
+                html += `
+                    <tr>
+                        <td>${l.created_at}</td>
+                        <td><strong>${l.license_key}</strong></td>
+                        <td>${l.action}</td>
+                        <td>${l.details || ''}</td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        async function activateLicense(licenseKey) {
+            try {
+                logDebug(`Attivazione licenza: ${licenseKey}`);
+                const { error } = await supabase
+                    .from('licenses')
+                    .update({ is_active: true })
+                    .eq('license_key', licenseKey);
+                if (error) throw error;
+                showAlert('✅ Licenza attivata con successo!', 'success');
+                loadLicenses();
+            } catch (err) {
+                logDebug(`Errore attivazione: ${err.message}`);
+                showAlert(`❌ Errore nell'attivazione: ${err.message}`, 'error');
+            }
+        }
+
+        async function deactivateLicense(licenseKey) {
+            try {
+                logDebug(`Disattivazione licenza: ${licenseKey}`);
+                const { error } = await supabase
+                    .from('licenses')
+                    .update({ is_active: false })
+                    .eq('license_key', licenseKey);
+                if (error) throw error;
+                showAlert('❌ Licenza disattivata con successo!', 'success');
+                loadLicenses();
+            } catch (err) {
+                logDebug(`Errore disattivazione: ${err.message}`);
+                showAlert(`❌ Errore nella disattivazione: ${err.message}`, 'error');
+            }
+        }
+
+        async function deleteLicense(licenseKey) {
+            if (!confirm('⚠️ Sei sicuro di voler eliminare questa licenza? Questa azione non può essere annullata!')) return;
+            try {
+                logDebug(`Eliminazione licenza: ${licenseKey}`);
+                await supabase.from('activations').delete().eq('license_key', licenseKey);
+                const { error } = await supabase.from('licenses').delete().eq('license_key', licenseKey);
+                if (error) throw error;
+                showAlert('��️ Licenza eliminata con successo!', 'success');
+                loadAllData();
+            } catch (err) {
+                logDebug(`Errore eliminazione: ${err.message}`);
+                showAlert(`❌ Errore nell'eliminazione: ${err.message}`, 'error');
+            }
+        }
+
+        async function deleteActivation(activationId) {
+            if (!confirm('⚠️ Eliminare questa attivazione? L\'utente dovrà riattivare la licenza.')) return;
+            try {
+                logDebug(`Eliminazione attivazione: ${activationId}`);
+                const { error } = await supabase.from('activations').delete().eq('id', activationId);
+                if (error) throw error;
+                showAlert('🗑️ Attivazione eliminata con successo!', 'success');
+                loadActivations();
+            } catch (err) {
+                logDebug(`Errore eliminazione attivazione: ${err.message}`);
+                showAlert(`❌ Errore nell\'eliminazione: ${err.message}`, 'error');
+            }
+        }
+
+        function editLicense(licenseKey, userEmail, userName, maxActivations) {
+            document.getElementById('editLicenseKey').value = licenseKey;
+            document.getElementById('editUserEmail').value = userEmail;
+            document.getElementById('editUserName').value = userName;
+            document.getElementById('editMaxActivations').value = maxActivations || 1;
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        async function saveLicenseEdit(event) {
+            event.preventDefault();
+            const licenseKey = document.getElementById('editLicenseKey').value;
+            const userEmail = document.getElementById('editUserEmail').value || null;
+            const userName = document.getElementById('editUserName').value || null;
+            const maxActivations = parseInt(document.getElementById('editMaxActivations').value || '1', 10);
+            const expiresAt = document.getElementById('editExpiresAt').value;
+
+            const updateData = {
+                user_email: userEmail,
+                user_name: userName,
+                max_activations: maxActivations,
+                updated_at: new Date().toISOString(),
+                expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
+            };
+
+            try {
+                logDebug(`Aggiornamento licenza: ${licenseKey}`);
+                const { error } = await supabase
+                    .from('licenses')
+                    .update(updateData)
+                    .eq('license_key', licenseKey);
+                if (error) throw error;
+                showAlert('✅ Licenza aggiornata con successo!', 'success');
+                closeEditModal();
+                loadLicenses();
+            } catch (err) {
+                logDebug(`Errore aggiornamento: ${err.message}`);
+                showAlert(`❌ Errore nell\'aggiornamento: ${err.message}`, 'error');
+            }
+        }
+
+        async function createLicense(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+
+            let features = ['all'];
+            const rawFeatures = formData.get('features');
+            if (rawFeatures) {
+                try { features = JSON.parse(rawFeatures); }
+                catch { return showAlert('❌ "Funzionalità" deve essere JSON valido (es: ["all"])', 'error'); }
+            }
+
+            const payload = {
+                user_email: formData.get('user_email'),
+                user_name: formData.get('user_name'),
+                max_activations: parseInt(formData.get('max_activations') || '1', 10),
+                features,
+                is_active: true,
+                activations_count: 0,
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                logDebug('Creazione nuova licenza');
+                const { error } = await supabase.from('licenses').insert(payload);
+                if (error) throw error;
+                showAlert('�� Licenza creata con successo!', 'success');
+                event.target.reset();
+                loadLicenses();
+            } catch (err) {
+                logDebug(`Errore creazione: ${err.message}`);
+                showAlert(`❌ Errore nella creazione: ${err.message}`, 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.tabs'));
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        document.getElementById('editForm').addEventListener('submit', saveLicenseEdit);
+        document.getElementById('createLicenseForm').addEventListener('submit', createLicense);
+
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
+    </script>
+</body>
+</html>
