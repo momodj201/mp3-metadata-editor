@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚀 Dashboard Licenze - MP3 Metadata Editor Pro</title>
+    <title>🔐 Dashboard Licenze - MP3 Metadata Editor Pro</title>
     
     <!-- Supabase CDN con fallback completo -->
     <script>
@@ -47,66 +47,168 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 10px;
+            color: #333;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-card h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .login-card p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .login-input {
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .login-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .login-error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* Dashboard Content */
+        .dashboard-content {
+            display: none;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             overflow: hidden;
         }
 
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
+            padding: 25px 20px;
             text-align: center;
+            position: relative;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 8px;
             font-weight: 700;
         }
 
         .header p {
-            font-size: 1.2em;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
             opacity: 0.9;
         }
 
         .config-section {
             background: #f8f9fa;
-            padding: 30px;
+            padding: 20px;
             border-bottom: 1px solid #e9ecef;
         }
 
         .config-section h2 {
             color: #495057;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            font-size: 1.2rem;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: 600;
             color: #495057;
+            font-size: 0.9rem;
         }
 
         .form-group input {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 2px solid #e9ecef;
-            border-radius: 8px;
+            border-radius: 6px;
             font-size: 14px;
             transition: border-color 0.3s;
         }
@@ -120,18 +222,20 @@
             background: #667eea;
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 10px 18px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
-            margin-right: 10px;
+            margin: 3px;
             transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .btn:hover {
             background: #5a6fd8;
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
         .btn-success { background: #28a745; }
@@ -143,18 +247,21 @@
             display: flex;
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
+            flex-wrap: wrap;
         }
 
         .tab {
             flex: 1;
-            padding: 15px;
+            min-width: 120px;
+            padding: 12px 8px;
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: #6c757d;
             transition: all 0.3s;
+            white-space: nowrap;
         }
 
         .tab:hover {
@@ -170,7 +277,7 @@
 
         .tab-content {
             display: none;
-            padding: 30px;
+            padding: 20px;
         }
 
         .tab-content.active {
@@ -178,13 +285,13 @@
         }
 
         .section {
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .section h2 {
             color: #495057;
-            margin-bottom: 20px;
-            font-size: 1.5em;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
         }
 
         .table {
@@ -193,22 +300,25 @@
             background: white;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 13px;
         }
 
         .table th {
             background: #f8f9fa;
-            padding: 15px;
+            padding: 12px 8px;
             text-align: left;
             font-weight: 600;
             color: #495057;
             border-bottom: 2px solid #e9ecef;
+            white-space: nowrap;
         }
 
         .table td {
-            padding: 15px;
+            padding: 10px 8px;
             border-bottom: 1px solid #e9ecef;
             color: #495057;
+            word-break: break-word;
         }
 
         .table tr:hover {
@@ -216,11 +326,12 @@
         }
 
         .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
+            white-space: nowrap;
         }
 
         .status-active {
@@ -235,18 +346,18 @@
 
         .loading {
             text-align: center;
-            padding: 40px;
+            padding: 30px;
             color: #6c757d;
         }
 
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto 15px;
         }
 
         @keyframes spin {
@@ -255,10 +366,11 @@
         }
 
         .alert {
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 6px;
             font-weight: 600;
+            font-size: 13px;
         }
 
         .alert-success {
@@ -287,18 +399,18 @@
         .modal-content {
             background-color: white;
             margin: 5% auto;
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 500px;
+            padding: 25px;
+            border-radius: 12px;
+            width: 95%;
+            max-width: 450px;
             position: relative;
         }
 
         .close {
             position: absolute;
-            right: 20px;
-            top: 20px;
-            font-size: 28px;
+            right: 15px;
+            top: 15px;
+            font-size: 24px;
             font-weight: bold;
             cursor: pointer;
             color: #aaa;
@@ -310,39 +422,39 @@
 
         .form-group textarea {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 6px;
+            font-size: 13px;
             font-family: inherit;
             resize: vertical;
-            min-height: 80px;
+            min-height: 60px;
         }
 
         .form-group input[type="number"] {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 6px;
+            font-size: 13px;
         }
 
         .form-group input[type="datetime-local"] {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 6px;
+            font-size: 13px;
         }
 
         .cdn-status {
             background: #e7f3ff;
             border: 1px solid #b3d9ff;
             color: #0066cc;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
+            padding: 8px;
+            border-radius: 6px;
+            margin: 15px 20px;
+            font-size: 13px;
         }
 
         .cdn-status.error {
@@ -360,166 +472,318 @@
         .debug-info {
             background: #f8f9fa;
             border: 1px solid #dee2e6;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 15px 20px;
             font-family: monospace;
-            font-size: 12px;
+            font-size: 11px;
             color: #495057;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+            
+            .login-card {
+                padding: 30px 20px;
+            }
+            
+            .container {
+                border-radius: 10px;
+            }
+            
+            .header {
+                padding: 20px 15px;
+            }
+            
+            .config-section {
+                padding: 15px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                min-width: auto;
+                padding: 10px;
+            }
+            
+            .tab-content {
+                padding: 15px;
+            }
+            
+            .table {
+                font-size: 12px;
+            }
+            
+            .table th,
+            .table td {
+                padding: 8px 6px;
+            }
+            
+            .btn {
+                padding: 8px 12px;
+                font-size: 12px;
+                margin: 2px;
+            }
+            
+            .modal-content {
+                width: 98%;
+                margin: 10% auto;
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .header p {
+                font-size: 0.9rem;
+            }
+            
+            .table {
+                font-size: 11px;
+            }
+            
+            .table th,
+            .table td {
+                padding: 6px 4px;
+            }
+            
+            .btn {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 Dashboard Licenze</h1>
-            <p>MP3 Metadata Editor Pro - Gestione Licenze Online</p>
-        </div>
-
-        <!-- Status CDN -->
-        <div id="cdnStatus" class="cdn-status">
-            🔄 Verificando caricamento Supabase CDN...
-        </div>
-
-        <!-- Debug Info -->
-        <div id="debugInfo" class="debug-info" style="display: none;">
-            <strong>Debug Info:</strong><br>
-            <span id="debugContent"></span>
-        </div>
-
-        <!-- Configurazione Supabase -->
-        <div class="config-section">
-            <h2>⚙️ Configurazione Supabase</h2>
-            <div class="form-group">
-                <label for="supabaseUrl">Supabase URL:</label>
-                <input type="text" id="supabaseUrl" placeholder="https://your-project.supabase.co" value="https://vuudgwnuwteguotkvxkn.supabase.co">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-card">
+            <h1>🔐 Accesso Dashboard</h1>
+            <p>Inserisci la password per accedere al sistema di gestione licenze</p>
+            
+            <form class="login-form" id="loginForm">
+                <input type="password" class="login-input" id="passwordInput" placeholder="Password" required>
+                <button type="submit" class="login-btn">🔓 Accedi</button>
+            </form>
+            
+            <div class="login-error" id="loginError">
+                ❌ Password non corretta. Riprova.
             </div>
-            <div class="form-group">
-                <label for="supabaseKey">Supabase Anon Key:</label>
-                <input type="text" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1dWRnd251d3RlZ3VvdGt2eGtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzU0MjQsImV4cCI6MjA3MTIxMTQyNH0.fkJbq1XMTAscKQLQB03SjZvt3tZU_EKXVFyph8Ph-J8">
+        </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div id="dashboardContent" class="dashboard-content">
+        <div class="container">
+            <div class="header">
+                <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+                <h1>🚀 Dashboard Licenze</h1>
+                <p>MP3 Metadata Editor Pro - Gestione Licenze Online</p>
             </div>
-            <button class="btn" onclick="testConnection()">�� Test Connessione</button>
-            <button class="btn" onclick="saveConfig()">💾 Salva Config</button>
-            <button class="btn" onclick="toggleDebug()">�� Debug Info</button>
-        </div>
 
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab active" onclick="showTab('licenses', this)">🔑 Licenze</button>
-            <button class="tab" onclick="showTab('activations', this)">💻 Attivazioni</button>
-            <button class="tab" onclick="showTab('logs', this)">📝 Log Sistema</button>
-            <button class="tab" onclick="showTab('create', this)">➕ Crea Licenza</button>
-        </div>
+            <!-- Status CDN -->
+            <div id="cdnStatus" class="cdn-status">
+                🔄 Verificando caricamento Supabase CDN...
+            </div>
 
-        <!-- Tab Licenze -->
-        <div id="licenses" class="tab-content active">
-            <div class="section">
-                <h2>�� Gestione Licenze</h2>
-                <div id="licensesContent">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Caricamento licenze...</p>
+            <!-- Debug Info -->
+            <div id="debugInfo" class="debug-info" style="display: none;">
+                <strong>Debug Info:</strong><br>
+                <span id="debugContent"></span>
+            </div>
+
+            <!-- Configurazione Supabase -->
+            <div class="config-section">
+                <h2>⚙️ Configurazione Supabase</h2>
+                <div class="form-group">
+                    <label for="supabaseUrl">Supabase URL:</label>
+                    <input type="text" id="supabaseUrl" placeholder="https://your-project.supabase.co" value="https://vuudgwnuwteguotkvxkn.supabase.co">
+                </div>
+                <div class="form-group">
+                    <label for="supabaseKey">Supabase Anon Key:</label>
+                    <input type="text" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1dWRnd251d3RlZ3VvdGt2eGtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzU0MjQsImV4cCI6MjA3MTIxMTQyNH0.fkJbq1XMTAscKQLQB03SjZvt3tZU_EKXVFyph8Ph-J8">
+                </div>
+                <button class="btn" onclick="testConnection()">🧪 Test Connessione</button>
+                <button class="btn" onclick="saveConfig()">💾 Salva Config</button>
+                <button class="btn" onclick="toggleDebug()">🔍 Debug Info</button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('licenses', this)">🔑 Licenze</button>
+                <button class="tab" onclick="showTab('activations', this)">💻 Attivazioni</button>
+                <button class="tab" onclick="showTab('logs', this)">📝 Log Sistema</button>
+                <button class="tab" onclick="showTab('create', this)">➕ Crea Licenza</button>
+            </div>
+
+            <!-- Tab Licenze -->
+            <div id="licenses" class="tab-content active">
+                <div class="section">
+                    <h2>🔑 Gestione Licenze</h2>
+                    <div id="licensesContent">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>Caricamento licenze...</p>
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Tab Attivazioni -->
+            <div id="activations" class="tab-content">
+                <div class="section">
+                    <h2>💻 Attivazioni Hardware</h2>
+                    <div id="activationsContent">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>Caricamento attivazioni...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Log -->
+            <div id="logs" class="tab-content">
+                <div class="section">
+                    <h2>📝 Log Sistema</h2>
+                    <div id="logsContent">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>Caricamento log...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Crea Licenza -->
+            <div id="create" class="tab-content">
+                <div class="section">
+                    <h2>➕ Crea Nuova Licenza</h2>
+                    <form id="createLicenseForm">
+                        <div class="form-group">
+                            <label for="userEmail">Email Utente:</label>
+                            <input type="email" id="userEmail" name="user_email" placeholder="utente@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="userName">Nome Utente:</label>
+                            <input type="text" id="userName" name="user_name" placeholder="Nome Cognome" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="maxActivations">Max Attivazioni:</label>
+                            <input type="number" id="maxActivations" name="max_activations" min="1" max="100" value="5" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="features">Funzionalità (JSON):</label>
+                            <textarea id="features" name="features" rows="3" placeholder='["all"] o ["basic", "advanced"]'>["all"]</textarea>
+                        </div>
+                        <button type="submit" class="btn">🚀 Crea Licenza</button>
+                    </form>
                 </div>
             </div>
         </div>
 
-        <!-- Tab Attivazioni -->
-        <div id="activations" class="tab-content">
-            <div class="section">
-                <h2>💻 Attivazioni Hardware</h2>
-                <div id="activationsContent">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Caricamento attivazioni...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab Log -->
-        <div id="logs" class="tab-content">
-            <div class="section">
-                <h2>📝 Log Sistema</h2>
-                <div id="logsContent">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Caricamento log...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab Crea Licenza -->
-        <div id="create" class="tab-content">
-            <div class="section">
-                <h2>➕ Crea Nuova Licenza</h2>
-                <form id="createLicenseForm">
+        <!-- Modal per Modifica Licenza -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeEditModal()">&times;</span>
+                <h2>✏️ Modifica Licenza</h2>
+                <form id="editForm">
+                    <input type="hidden" id="editLicenseKey" name="license_key">
+                    
                     <div class="form-group">
-                        <label for="userEmail">Email Utente:</label>
-                        <input type="email" id="userEmail" name="user_email" placeholder="utente@example.com" required>
+                        <label for="editUserEmail">Email Utente:</label>
+                        <input type="email" id="editUserEmail" name="user_email" placeholder="utente@example.com">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="userName">Nome Utente:</label>
-                        <input type="text" id="userName" name="user_name" placeholder="Nome Cognome" required>
+                        <label for="editUserName">Nome Utente:</label>
+                        <input type="text" id="editUserName" name="user_name" placeholder="Nome Cognome">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="maxActivations">Max Attivazioni:</label>
-                        <input type="number" id="maxActivations" name="max_activations" min="1" max="100" value="5" required>
+                        <label for="editMaxActivations">Max Attivazioni:</label>
+                        <input type="number" id="editMaxActivations" name="max_activations" min="1" max="100" required>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="features">Funzionalità (JSON):</label>
-                        <textarea id="features" name="features" rows="3" placeholder='["all"] o ["basic", "advanced"]'>["all"]</textarea>
+                        <label for="editExpiresAt">Data Scadenza (opzionale):</label>
+                        <input type="datetime-local" id="editExpiresAt" name="expires_at">
                     </div>
-                    <button type="submit" class="btn">🚀 Crea Licenza</button>
+                    
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="button" onclick="closeEditModal()" class="btn" style="background: #6c757d; margin-right: 10px;">❌ Annulla</button>
+                        <button type="submit" class="btn">💾 Salva Modifiche</button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Modal per Modifica Licenza -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeEditModal()">&times;</span>
-            <h2>✏️ Modifica Licenza</h2>
-            <form id="editForm">
-                <input type="hidden" id="editLicenseKey" name="license_key">
-                
-                <div class="form-group">
-                    <label for="editUserEmail">Email Utente:</label>
-                    <input type="email" id="editUserEmail" name="user_email" placeholder="utente@example.com">
-                </div>
-                
-                <div class="form-group">
-                    <label for="editUserName">Nome Utente:</label>
-                    <input type="text" id="editUserName" name="user_name" placeholder="Nome Cognome">
-                </div>
-                
-                <div class="form-group">
-                    <label for="editMaxActivations">Max Attivazioni:</label>
-                    <input type="number" id="editMaxActivations" name="max_activations" min="1" max="100" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="editExpiresAt">Data Scadenza (opzionale):</label>
-                    <input type="datetime-local" id="editExpiresAt" name="expires_at">
-                </div>
-                
-                <div style="text-align: right; margin-top: 20px;">
-                    <button type="button" onclick="closeEditModal()" class="btn" style="background: #6c757d; margin-right: 10px;">❌ Annulla</button>
-                    <button type="submit" class="btn">💾 Salva Modifiche</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
+        // Password di accesso
+        const ADMIN_PASSWORD = "Raffaele@1";
+        
+        // Controllo autenticazione
+        function checkAuth() {
+            const isAuthenticated = sessionStorage.getItem('dashboardAuthenticated');
+            if (isAuthenticated === 'true') {
+                showDashboard();
+            } else {
+                showLogin();
+            }
+        }
+        
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('dashboardContent').style.display = 'none';
+        }
+        
+        function showDashboard() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+        }
+        
+        function login(password) {
+            if (password === ADMIN_PASSWORD) {
+                sessionStorage.setItem('dashboardAuthenticated', 'true');
+                showDashboard();
+                document.getElementById('loginError').style.display = 'none';
+                document.getElementById('passwordInput').value = '';
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+        
+        function logout() {
+            sessionStorage.removeItem('dashboardAuthenticated');
+            showLogin();
+        }
+        
+        // Gestione form login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const password = document.getElementById('passwordInput').value;
+            login(password);
+        });
+        
         // Debug info
         let debugLog = [];
         
         function logDebug(message) {
-            debugLog.push(`${new Date().toLocaleTimeString()}: ${message}`);
-            console.log(message);
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `${timestamp}: ${message}`;
+            debugLog.push(logEntry);
+            console.log(logEntry);
         }
 
         function toggleDebug() {
@@ -560,6 +824,7 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             logDebug('DOM caricato');
+            checkAuth();
             
             // Verifica CDN dopo 3 secondi
             setTimeout(checkCDNStatus, 3000);
@@ -776,7 +1041,7 @@
                         <td>${a.platform}</td>
                         <td>${a.version}</td>
                         <td>${a.activated_at}</td>
-                        <td><a href="#" onclick="deleteActivation(${a.id})" class="btn btn-danger">��️ Elimina</a></td>
+                        <td><a href="#" onclick="deleteActivation(${a.id})" class="btn btn-danger">🗑️ Elimina</a></td>
                     </tr>
                 `;
             });
@@ -873,7 +1138,7 @@
                 await supabase.from('activations').delete().eq('license_key', licenseKey);
                 const { error } = await supabase.from('licenses').delete().eq('license_key', licenseKey);
                 if (error) throw error;
-                showAlert('��️ Licenza eliminata con successo!', 'success');
+                showAlert('🗑️ Licenza eliminata con successo!', 'success');
                 loadAllData();
             } catch (err) {
                 logDebug(`Errore eliminazione: ${err.message}`);
@@ -964,7 +1229,7 @@
                 logDebug('Creazione nuova licenza');
                 const { error } = await supabase.from('licenses').insert(payload);
                 if (error) throw error;
-                showAlert('�� Licenza creata con successo!', 'success');
+                showAlert('🚀 Licenza creata con successo!', 'success');
                 event.target.reset();
                 loadLicenses();
             } catch (err) {
